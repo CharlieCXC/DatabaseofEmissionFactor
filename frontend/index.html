@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>排放因子数据库</title>
+    <meta name="description" content="国际标准排放因子数据库管理系统" />
+    <meta name="keywords" content="排放因子,碳排放,环境数据,碳足迹,LCA" />
+    <meta name="author" content="排放因子数据库团队" />
+    
+    <!-- 预加载关键字体 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- 性能优化 -->
+    <link rel="dns-prefetch" href="//fonts.googleapis.com">
+    <link rel="dns-prefetch" href="//fonts.gstatic.com">
+    
+    <!-- PWA支持 -->
+    <meta name="theme-color" content="#1677ff" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="排放因子库" />
+    
+    <!-- 社交媒体元数据 -->
+    <meta property="og:title" content="排放因子数据库" />
+    <meta property="og:description" content="国际标准排放因子数据库管理系统" />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/logo.png" />
+    
+    <!-- 安全性 -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' fonts.googleapis.com; font-src 'self' fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' http://localhost:3000;">
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- 加载状态提示 -->
+    <noscript>
+      <div style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-family: Arial, sans-serif;
+        text-align: center;
+        z-index: 9999;
+      ">
+        <div>
+          <h1>排放因子数据库</h1>
+          <p>您的浏览器不支持或禁用了JavaScript。</p>
+          <p>请启用JavaScript以获得最佳体验。</p>
+        </div>
+      </div>
+    </noscript>
+  </body>
+</html> 
