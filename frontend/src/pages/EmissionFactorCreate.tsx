@@ -18,18 +18,17 @@ import {
   Alert,
   Tooltip,
   Modal,
-  Statistic
 } from 'antd';
 import {
   SaveOutlined,
   EyeOutlined,
-  CalculatorOutlined,
   InfoCircleOutlined,
   ArrowLeftOutlined,
   CheckCircleOutlined
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import emissionFactorService from '../services/emissionFactorService';
+import PedigreeMatrix, { type QualityAssessmentResult } from '../components/QualityAssessment/PedigreeMatrix';
 import type {
   CreateEmissionFactorRequest,
   FormOptions,
@@ -55,8 +54,9 @@ const EmissionFactorCreate: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [previewVisible, setPreviewVisible] = useState(false);
-  const [qualityScore, setQualityScore] = useState<QualityScore | null>(null);
-  const [calculating, setCalculating] = useState(false);
+  const [qualityScore, _setQualityScore] = useState<QualityScore | null>(null);
+  const [_qualityAssessment, setQualityAssessment] = useState<QualityAssessmentResult | null>(null);
+  const [_calculating, _setCalculating] = useState(false);
 
   // 步骤定义
   const steps = [
@@ -93,69 +93,73 @@ const EmissionFactorCreate: React.FC = () => {
   }, []);
 
   // 监听表单值变化
-  const handleFormChange = (changedValues: any, allValues: any) => {
+  const handleFormChange = (_changedValues: any, allValues: any) => {
     setFormData(allValues);
   };
 
-  // 计算质量评分
-  const calculateQualityScore = async () => {
-    const values = form.getFieldsValue();
-    
-    if (!values.temporal_representativeness || 
-        !values.geographical_representativeness || 
-        !values.technology_representativeness || 
-        !values.completeness) {
-      message.warning('请先填写所有质量评估字段');
-      return;
-    }
+  // 计算质量评分 - TODO: 实现质量评分计算功能
+  // const calculateQualityScore = async () => {
+  //   const values = form.getFieldsValue();
+  //   
+  //   if (!values.temporal_representativeness || 
+  //       !values.geographical_representativeness || 
+  //       !values.technology_representativeness || 
+  //       !values.completeness) {
+  //     message.warning('请先填写所有质量评估字段');
+  //     return;
+  //   }
 
-    setCalculating(true);
-    try {
-      const score = await emissionFactorService.calculateQualityScore({
-        temporal_representativeness: values.temporal_representativeness,
-        geographical_representativeness: values.geographical_representativeness,
-        technology_representativeness: values.technology_representativeness,
-        completeness: values.completeness
-      });
-      
-      setQualityScore(score);
-      form.setFieldValue('quality_score', score.overall_score);
-      message.success('质量评分计算完成');
-    } catch (error) {
-      message.error('质量评分计算失败');
-    } finally {
-      setCalculating(false);
-    }
-  };
+  //   setCalculating(true);
+  //   try {
+  //     const score = await emissionFactorService.calculateQualityScore({
+  //       temporal_representativeness: values.temporal_representativeness,
+  //       geographical_representativeness: values.geographical_representativeness,
+  //       technology_representativeness: values.technology_representativeness,
+  //       completeness: values.completeness
+  //     });
+  //     
+  //     setQualityScore(score);
+  //     form.setFieldValue('quality_score', score.overall_score);
+  //     message.success('质量评分计算完成');
+  //   } catch (error) {
+  //     message.error('质量评分计算失败');
+  //   } finally {
+  //     setCalculating(false);
+  //   }
+  // };
 
   // 验证表单数据
   const validateForm = async () => {
     try {
       const values = await form.validateFields();
-      const result = await emissionFactorService.validateEmissionFactor(values);
       
-      if (!result.valid) {
+      // TODO: 实现后端验证接口
+      // const result = await emissionFactorService.validateImportData([values]);
+      
+      // 暂时使用前端基础验证
+      if (!values.name || !values.category || !values.value || !values.unit) {
         Modal.error({
           title: '数据验证失败',
-          content: (
-            <div>
-              {result.errors.map((error, index) => (
-                <div key={index} className="mb-2">
-                  <Text strong>{error.field}:</Text> {error.message}
-                </div>
-              ))}
-            </div>
-          )
+          content: '请填写所有必填字段'
         });
         return false;
       }
 
-      if (result.warnings.length > 0) {
+      // 如果需要显示警告（示例）
+      const warnings: Array<{field: string; message: string}> = [];
+      if (values.value && values.value > 10) {
+        warnings.push({
+          field: '排放值',
+          message: '数值较大，请确认是否正确'
+        });
+      }
+
+      if (warnings.length > 0) {
         Modal.warning({
           title: '数据验证警告',
           content: (
             <div>
-              {result.warnings.map((warning, index) => (
+              {warnings.map((warning: {field: string; message: string}, index: number) => (
                 <div key={index} className="mb-2">
                   <Text strong>{warning.field}:</Text> {warning.message}
                 </div>
@@ -240,59 +244,59 @@ const EmissionFactorCreate: React.FC = () => {
     }
   };
 
-  // 渲染质量评分
-  const renderQualityScore = () => {
-    if (!qualityScore) return null;
+  // 渲染质量评分 - TODO: 实现质量评分显示功能
+  // const renderQualityScore = () => {
+  //   if (!qualityScore) return null;
 
-    return (
-      <Card size="small" className="mb-4">
-        <Title level={5}>质量评分详情</Title>
-        <Row gutter={16}>
-          <Col span={6}>
-            <Statistic
-              title="时间代表性"
-              value={qualityScore.temporal_representativeness}
-              suffix="分"
-            />
-          </Col>
-          <Col span={6}>
-            <Statistic
-              title="地理代表性"
-              value={qualityScore.geographical_representativeness}
-              suffix="分"
-            />
-          </Col>
-          <Col span={6}>
-            <Statistic
-              title="技术代表性"
-              value={qualityScore.technology_representativeness}
-              suffix="分"
-            />
-          </Col>
-          <Col span={6}>
-            <Statistic
-              title="完整性"
-              value={qualityScore.completeness}
-              suffix="分"
-            />
-          </Col>
-        </Row>
-        <Divider />
-        <div className="text-center">
-          <Progress
-            type="circle"
-            percent={qualityScore.overall_score}
-            format={percent => `${percent}分`}
-            strokeColor={qualityScore.overall_score >= 80 ? '#52c41a' : 
-                        qualityScore.overall_score >= 50 ? '#faad14' : '#f5222d'}
-          />
-          <div className="mt-2">
-            <Text strong>综合质量评分</Text>
-          </div>
-        </div>
-      </Card>
-    );
-  };
+  //   return (
+  //     <Card size="small" className="mb-4">
+  //       <Title level={5}>质量评分详情</Title>
+  //       <Row gutter={16}>
+  //         <Col span={6}>
+  //           <Statistic
+  //             title="时间代表性"
+  //             value={qualityScore.temporal_representativeness}
+  //             suffix="分"
+  //           />
+  //         </Col>
+  //         <Col span={6}>
+  //           <Statistic
+  //             title="地理代表性"
+  //             value={qualityScore.geographical_representativeness}
+  //             suffix="分"
+  //           />
+  //         </Col>
+  //         <Col span={6}>
+  //           <Statistic
+  //             title="技术代表性"
+  //             value={qualityScore.technology_representativeness}
+  //             suffix="分"
+  //           />
+  //         </Col>
+  //         <Col span={6}>
+  //           <Statistic
+  //             title="完整性"
+  //             value={qualityScore.completeness}
+  //             suffix="分"
+  //           />
+  //         </Col>
+  //       </Row>
+  //       <Divider />
+  //       <div className="text-center">
+  //         <Progress
+  //           type="circle"
+  //           percent={qualityScore.overall_score}
+  //           format={percent => `${percent}分`}
+  //           strokeColor={qualityScore.overall_score >= 80 ? '#52c41a' : 
+  //                       qualityScore.overall_score >= 50 ? '#faad14' : '#f5222d'}
+  //         />
+  //         <div className="mt-2">
+  //           <Text strong>综合质量评分</Text>
+  //         </div>
+  //       </div>
+  //     </Card>
+  //   );
+  // };
 
   // 渲染预览
   const renderPreview = () => {
@@ -594,119 +598,36 @@ const EmissionFactorCreate: React.FC = () => {
 
       case 2:
         return (
-          <Card title="质量评估" className="mb-4">
-            <Alert
-              message="质量评估说明"
-              description="请根据Pedigree矩阵标准，对数据的各项质量指标进行评分。评分范围为1-5分，分数越高表示质量越好。"
-              type="info"
-              showIcon
-              className="mb-4"
-            />
-            
-            <Row gutter={16}>
-              <Col span={12}>
-                <Form.Item
-                  label={
-                    <span>
-                      时间代表性 (1-5分)
-                      <Tooltip title="数据的时间代表性评估，5分表示数据时间范围完全符合应用需求">
-                        <InfoCircleOutlined className="ml-1" />
-                      </Tooltip>
-                    </span>
-                  }
-                  name="temporal_representativeness"
-                  rules={[{ required: true, message: '请选择时间代表性评分' }]}
-                >
-                  <Select placeholder="请选择评分">
-                    <Option value={5}>5分 - 优秀</Option>
-                    <Option value={4}>4分 - 良好</Option>
-                    <Option value={3}>3分 - 一般</Option>
-                    <Option value={2}>2分 - 较差</Option>
-                    <Option value={1}>1分 - 很差</Option>
-                  </Select>
-                </Form.Item>
-              </Col>
-              <Col span={12}>
-                <Form.Item
-                  label={
-                    <span>
-                      地理代表性 (1-5分)
-                      <Tooltip title="数据的地理代表性评估，5分表示数据地理范围完全符合应用需求">
-                        <InfoCircleOutlined className="ml-1" />
-                      </Tooltip>
-                    </span>
-                  }
-                  name="geographical_representativeness"
-                  rules={[{ required: true, message: '请选择地理代表性评分' }]}
-                >
-                  <Select placeholder="请选择评分">
-                    <Option value={5}>5分 - 优秀</Option>
-                    <Option value={4}>4分 - 良好</Option>
-                    <Option value={3}>3分 - 一般</Option>
-                    <Option value={2}>2分 - 较差</Option>
-                    <Option value={1}>1分 - 很差</Option>
-                  </Select>
-                </Form.Item>
-              </Col>
-              <Col span={12}>
-                <Form.Item
-                  label={
-                    <span>
-                      技术代表性 (1-5分)
-                      <Tooltip title="数据的技术代表性评估，5分表示数据技术水平完全符合应用需求">
-                        <InfoCircleOutlined className="ml-1" />
-                      </Tooltip>
-                    </span>
-                  }
-                  name="technology_representativeness"
-                  rules={[{ required: true, message: '请选择技术代表性评分' }]}
-                >
-                  <Select placeholder="请选择评分">
-                    <Option value={5}>5分 - 优秀</Option>
-                    <Option value={4}>4分 - 良好</Option>
-                    <Option value={3}>3分 - 一般</Option>
-                    <Option value={2}>2分 - 较差</Option>
-                    <Option value={1}>1分 - 很差</Option>
-                  </Select>
-                </Form.Item>
-              </Col>
-              <Col span={12}>
-                <Form.Item
-                  label={
-                    <span>
-                      完整性 (1-5分)
-                      <Tooltip title="数据的完整性评估，5分表示数据完整性很高，无缺失">
-                        <InfoCircleOutlined className="ml-1" />
-                      </Tooltip>
-                    </span>
-                  }
-                  name="completeness"
-                  rules={[{ required: true, message: '请选择完整性评分' }]}
-                >
-                  <Select placeholder="请选择评分">
-                    <Option value={5}>5分 - 优秀</Option>
-                    <Option value={4}>4分 - 良好</Option>
-                    <Option value={3}>3分 - 一般</Option>
-                    <Option value={2}>2分 - 较差</Option>
-                    <Option value={1}>1分 - 很差</Option>
-                  </Select>
-                </Form.Item>
-              </Col>
-            </Row>
-
-            <div className="text-center mb-4">
-              <Button
-                type="primary"
-                icon={<CalculatorOutlined />}
-                onClick={calculateQualityScore}
-                loading={calculating}
-              >
-                计算质量评分
-              </Button>
-            </div>
-
-            {renderQualityScore()}
-          </Card>
+          <PedigreeMatrix
+            initialValues={{
+              temporal_representativeness: formData.temporal_representativeness,
+              geographical_representativeness: formData.geographical_representativeness,
+              technology_representativeness: formData.technology_representativeness,
+              completeness: formData.completeness,
+              reliability: formData.reliability
+            }}
+            onScoreChange={(result) => {
+              setQualityAssessment(result);
+              form.setFieldsValue({
+                temporal_representativeness: result.scores.temporal_representativeness,
+                geographical_representativeness: result.scores.geographical_representativeness,
+                technology_representativeness: result.scores.technology_representativeness,
+                completeness: result.scores.completeness,
+                reliability: result.scores.reliability,
+                quality_score: result.overall_score
+              });
+              setFormData(prev => ({
+                ...prev,
+                temporal_representativeness: result.scores.temporal_representativeness,
+                geographical_representativeness: result.scores.geographical_representativeness,
+                technology_representativeness: result.scores.technology_representativeness,
+                completeness: result.scores.completeness,
+                reliability: result.scores.reliability,
+                quality_score: result.overall_score
+              }));
+            }}
+            showDetailedAnalysis={true}
+          />
         );
 
       case 3:

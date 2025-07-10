@@ -6,7 +6,6 @@ import type {
   RegisterResponse,
   UpdateProfileRequest,
   ChangePasswordRequest,
-  RefreshTokenRequest,
   RefreshTokenResponse,
   UserQueryParams,
   UserListResponse,

@@ -25,7 +25,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
 
 // 导入hooks
-import { useAuthActions, useIsAuthenticated } from './stores/authStore';
+import { useAuthActions } from './stores/authStore';
 
 // 设置dayjs中文locale
 dayjs.locale('zh-cn');
@@ -59,7 +59,6 @@ const themeConfig = {
 
 const App: React.FC = () => {
   const { checkAuth } = useAuthActions();
-  const isAuthenticated = useIsAuthenticated();
 
   // 应用启动时检查认证状态
   useEffect(() => {

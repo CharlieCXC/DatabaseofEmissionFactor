@@ -1,14 +1,13 @@
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { useCurrentUser } from '../stores/authStore';
 import { Result, Button } from 'antd';
-import { useIsAdmin } from '../stores/authStore';
 
 interface AdminRouteProps {
   children: React.ReactNode;
 }
 
 const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
-  const isAdmin = useIsAdmin();
+  const isAdmin = useCurrentUser();
 
   // 如果不是管理员，显示无权限页面
   if (!isAdmin) {

@@ -10,7 +10,6 @@ import {
   Popconfirm,
   message,
   Modal,
-  Upload,
   Form,
   Row,
   Col,
@@ -25,7 +24,6 @@ import type { ColumnsType } from 'antd/es/table';
 import type { TableRowSelection } from 'antd/lib/table/interface';
 import {
   PlusOutlined,
-  SearchOutlined,
   FilterOutlined,
   DownloadOutlined,
   UploadOutlined,
@@ -34,15 +32,15 @@ import {
   EyeOutlined,
   CopyOutlined,
   ExclamationCircleOutlined,
-  ReloadOutlined,
-  SettingOutlined
+  ReloadOutlined
 } from '@ant-design/icons';
 import { Link, useNavigate } from 'react-router-dom';
 import emissionFactorService from '../services/emissionFactorService';
+import { DataImport } from '../components/DataImport/DataImport';
+import { DataExport } from '../components/DataExport/DataExport';
 import type {
   EmissionFactor,
   EmissionFactorQueryParams,
-  EmissionFactorListResponse,
   EmissionFactorStats
 } from '../types/emission-factor';
 
@@ -80,12 +78,12 @@ const EmissionFactorList: React.FC = () => {
 
   // 选择状态
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
-  const [selectedRows, setSelectedRows] = useState<EmissionFactor[]>([]);
+  const [_selectedRows, setSelectedRows] = useState<EmissionFactor[]>([]);
 
   // UI状态
   const [filterVisible, setFilterVisible] = useState(false);
   const [importModalVisible, setImportModalVisible] = useState(false);
-  const [importLoading, setImportLoading] = useState(false);
+  const [exportModalVisible, setExportModalVisible] = useState(false);
 
   // 表格列定义
   const columns: ColumnsType<EmissionFactor> = [
@@ -397,85 +395,69 @@ const EmissionFactorList: React.FC = () => {
     }
   };
 
-  // 导出处理
-  const handleExport = async (format: 'csv' | 'xlsx' = 'xlsx') => {
-    try {
-      const blob = await emissionFactorService.exportEmissionFactors(queryParams, format);
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `emission_factors_${new Date().toISOString().split('T')[0]}.${format}`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      message.success('导出成功');
-    } catch (error) {
-      message.error('导出失败');
-    }
-  };
+  // 这些函数已经迁移到新的组件中，暂时保留以备后用
+  // const handleExport = async (format: 'csv' | 'xlsx' = 'xlsx') => {
+  //   try {
+  //     setLoading(true);
+  //     const data = await emissionFactorService.exportData(queryParams);
+  //     
+  //     // 这里应该处理数据格式化和文件生成
+  //     // 为简化示例，直接显示成功消息
+  //     message.success(`成功导出 ${data.length} 条数据`);
+  //   } catch (error) {
+  //     message.error('导出失败');
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
-  // 导入处理
-  const handleImport = async (file: File) => {
-    setImportLoading(true);
-    try {
-      const result = await emissionFactorService.importEmissionFactors(file, {
-        skip_duplicates: true,
-        update_existing: false
-      });
-      
-      if (result.error_count > 0) {
-        Modal.info({
-          title: '导入完成',
-          content: (
-            <div>
-              <p>成功导入: {result.success_count} 条</p>
-              <p>失败: {result.error_count} 条</p>
-              {result.errors.length > 0 && (
-                <div className="mt-4">
-                  <Text strong>错误详情:</Text>
-                  <ul className="mt-2">
-                    {result.errors.slice(0, 5).map((error, index) => (
-                      <li key={index}>第{error.row}行: {error.message}</li>
-                    ))}
-                    {result.errors.length > 5 && <li>...</li>}
-                  </ul>
-                </div>
-              )}
-            </div>
-          ),
-        });
-      } else {
-        message.success(`成功导入 ${result.success_count} 条记录`);
-      }
-      
-      setImportModalVisible(false);
-      loadData(queryParams);
-      loadStats();
-    } catch (error) {
-      message.error('导入失败');
-    } finally {
-      setImportLoading(false);
-    }
-  };
+  // const handleImport = async (file: File) => {
+  //   try {
+  //     // 这里的具体实现应该在DataImport组件中处理
+  //     message.success('导入功能已集成到新的导入组件中');
+  //   } catch (error: any) {
+  //     message.error('导入失败：' + error.message);
+  //   } finally {
+  //     // setImportLoading(false); // This line was removed
+  //   }
+  // };
 
-  // 下载模板
-  const handleDownloadTemplate = async () => {
-    try {
-      const blob = await emissionFactorService.getImportTemplate('xlsx');
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'emission_factor_template.xlsx';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      message.success('模板下载成功');
-    } catch (error) {
-      message.error('模板下载失败');
-    }
-  };
+  // const beforeUpload = (file: File) => {
+  //   const isExcel = 
+  //     file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+  //     file.type === 'application/vnd.ms-excel';
+  //   
+  //   if (!isExcel) {
+  //     message.error('只能上传Excel文件！');
+  //     return false;
+  //   }
+
+  //   const isLt10M = file.size / 1024 / 1024 < 10;
+  //   if (!isLt10M) {
+  //     message.error('文件大小不能超过10MB！');
+  //     return false;
+  //   }
+
+  //   handleImport(file);
+  //   return false; // 阻止自动上传
+  // };
+
+  // const handleDownloadTemplate = async () => {
+  //   try {
+  //     const blob = await emissionFactorService.downloadTemplate();
+  //     const url = window.URL.createObjectURL(blob);
+  //     const link = document.createElement('a');
+  //     link.href = url;
+  //     link.download = '排放因子导入模板.xlsx';
+  //     document.body.appendChild(link);
+  //     link.click();
+  //     document.body.removeChild(link);
+  //     window.URL.revokeObjectURL(url);
+  //     message.success('模板下载成功');
+  //   } catch (error) {
+  //     message.error('模板下载失败');
+  //   }
+  // };
 
   // 批量操作菜单
   const batchMenuItems = [
@@ -491,14 +473,10 @@ const EmissionFactorList: React.FC = () => {
   // 导出菜单
   const exportMenuItems = [
     {
-      key: 'xlsx',
-      label: 'Excel格式(.xlsx)',
-      onClick: () => handleExport('xlsx'),
-    },
-    {
-      key: 'csv',
-      label: 'CSV格式(.csv)',
-      onClick: () => handleExport('csv'),
+      key: 'export',
+      label: '打开导出设置',
+      icon: <DownloadOutlined />,
+      onClick: () => setExportModalVisible(true),
     },
   ];
 
@@ -710,43 +688,24 @@ const EmissionFactorList: React.FC = () => {
         </Form>
       </Modal>
 
-      {/* 导入数据弹窗 */}
-      <Modal
-        title="导入排放因子数据"
-        open={importModalVisible}
+      {/* 数据导入组件 */}
+      <DataImport
+        visible={importModalVisible}
         onCancel={() => setImportModalVisible(false)}
-        footer={null}
-        width={500}
-      >
-        <div className="text-center py-8">
-          <Upload.Dragger
-            accept=".xlsx,.xls,.csv"
-            multiple={false}
-            beforeUpload={(file) => {
-              handleImport(file);
-              return false;
-            }}
-            disabled={importLoading}
-          >
-            <p className="ant-upload-drag-icon">
-              <UploadOutlined />
-            </p>
-            <p className="ant-upload-text">点击或拖拽文件到此区域上传</p>
-            <p className="ant-upload-hint">
-              支持 Excel (.xlsx, .xls) 和 CSV 格式文件
-            </p>
-          </Upload.Dragger>
-          
-          <div className="mt-4">
-            <Button
-              type="link"
-              onClick={handleDownloadTemplate}
-            >
-              下载导入模板
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        onSuccess={() => {
+          setImportModalVisible(false);
+          loadData(queryParams);
+          loadStats();
+          message.success('数据导入成功，列表已刷新');
+        }}
+      />
+
+      {/* 数据导出组件 */}
+      <DataExport
+        visible={exportModalVisible}
+        onCancel={() => setExportModalVisible(false)}
+        currentFilters={queryParams}
+      />
     </div>
   );
 };

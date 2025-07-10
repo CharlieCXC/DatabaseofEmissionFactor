@@ -7,7 +7,6 @@ import {
   Typography, 
   Divider, 
   Checkbox,
-  message,
   Row,
   Col,
   Space
@@ -20,7 +19,7 @@ import {
   MailOutlined 
 } from '@ant-design/icons';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuthStore, useAuthActions, useIsAuthenticated, useAuthLoading } from '../stores/authStore';
+import { useAuthActions, useIsAuthenticated, useAuthLoading } from '../stores/authStore';
 
 const { Title, Text, Paragraph } = Typography;
 

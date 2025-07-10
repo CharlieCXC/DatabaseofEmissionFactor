@@ -10,6 +10,7 @@ import {
   Typography,
   Badge,
   Drawer,
+  type MenuProps,
 } from 'antd';
 import {
   MenuFoldOutlined,
@@ -25,7 +26,7 @@ import {
 import { useCurrentUser, useUserDisplayName, useAuthActions } from '../../stores/authStore';
 
 const { Header, Sider, Content } = Layout;
-const { Title, Text } = Typography;
+const { Title } = Typography;
 
 const MainLayout: React.FC = () => {
   const [collapsed, setCollapsed] = useState(false);
@@ -73,7 +74,7 @@ const MainLayout: React.FC = () => {
   ];
 
   // 用户下拉菜单
-  const userMenuItems = [
+  const userMenuItems: MenuProps['items'] = [
     {
       key: 'profile',
       icon: <UserOutlined />,
@@ -86,7 +87,7 @@ const MainLayout: React.FC = () => {
       label: '系统设置',
     },
     {
-      type: 'divider',
+      type: 'divider' as const,
     },
     {
       key: 'logout',

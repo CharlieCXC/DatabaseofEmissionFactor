@@ -23,6 +23,7 @@ export interface User {
   role: UserRole;
   status?: UserStatus;
   permissions: UserPermissions;
+  avatar?: string; // 用户头像URL
   created_at: string;
   updated_at: string;
   last_login_at?: string;

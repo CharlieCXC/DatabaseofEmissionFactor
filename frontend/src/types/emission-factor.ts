@@ -16,6 +16,7 @@ export interface EmissionFactor {
   geographical_representativeness?: number;
   technology_representativeness?: number;
   completeness?: number;
+  reliability?: number;
   methodology_description?: string;
   gas_type: string;
   sector?: string;
@@ -46,6 +47,7 @@ export interface CreateEmissionFactorRequest {
   geographical_representativeness?: number;
   technology_representativeness?: number;
   completeness?: number;
+  reliability?: number;
   methodology_description?: string;
   gas_type: string;
   sector?: string;
@@ -96,6 +98,7 @@ export interface QualityScore {
   geographical_representativeness: number;
   technology_representativeness: number;
   completeness: number;
+  reliability?: number;
   overall_score: number;
 }
 

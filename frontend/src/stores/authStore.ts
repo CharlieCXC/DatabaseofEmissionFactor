@@ -4,7 +4,6 @@ import { message } from 'antd';
 import authService from '../services/authService';
 import type {
   AuthState,
-  AuthActions,
   AuthStore,
   User,
   LoginRequest,
@@ -27,7 +26,7 @@ const initialState: AuthState = {
 export const useAuthStore = create<AuthStore>()(
   devtools(
     persist(
-      (set, get) => ({
+      (set, _get) => ({
         ...initialState,
 
         /**

@@ -7,6 +7,9 @@ interface ApiResponse<T = any> {
   message: string;
   data?: T;
   code?: string;
+  errors?: {
+    [field: string]: string[];
+  };
 }
 
 // 创建axios实例
@@ -80,7 +83,8 @@ api.interceptors.response.use(
         message.error(data.message || '操作失败');
       }
       
-      return Promise.reject(new Error(data.message || '操作失败'));
+      // 抛出错误而不是返回Promise.reject
+      throw new Error(data.message || '操作失败');
     }
 
     return response;

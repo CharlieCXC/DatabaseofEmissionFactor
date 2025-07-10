@@ -97,6 +97,7 @@ class EmissionFactorService {
     geographical_representativeness: number;
     technology_representativeness: number;
     completeness: number;
+    reliability?: number;
   }): Promise<QualityScore> {
     const response = await api.post(`${this.baseUrl}/quality-score`, data);
     return response.data.data;
@@ -139,65 +140,57 @@ class EmissionFactorService {
   }
 
   /**
+   * 批量导入排放因子数据
+   */
+  async batchImport(data: any[]): Promise<{
+    success: number;
+    failed: number;
+    errors: Array<{
+      row: number;
+      message: string;
+    }>;
+  }> {
+    const response = await api.post(`${this.baseUrl}/batch-import`, {
+      data
+    });
+    return response.data.data;
+  }
+
+  /**
    * 导出排放因子数据
    */
-  async exportEmissionFactors(params?: EmissionFactorQueryParams, format: 'csv' | 'xlsx' | 'json' = 'xlsx'): Promise<Blob> {
-    const response = await api.get(`${this.baseUrl}/export`, {
-      params: { ...params, format },
-      responseType: 'blob'
-    });
-    return response.data;
+  async exportData(params?: EmissionFactorQueryParams): Promise<EmissionFactor[]> {
+    const response = await api.get(`${this.baseUrl}/export`, { params });
+    return response.data.data;
   }
 
   /**
-   * 导入排放因子数据
+   * 下载导入模板
    */
-  async importEmissionFactors(file: File, options?: {
-    skip_duplicates?: boolean;
-    update_existing?: boolean;
-  }): Promise<{
-    success_count: number;
-    error_count: number;
-    errors: Array<{ row: number; message: string }>;
-  }> {
-    const formData = new FormData();
-    formData.append('file', file);
-    
-    if (options) {
-      Object.entries(options).forEach(([key, value]) => {
-        formData.append(key, String(value));
-      });
-    }
-
-    const response = await api.post(`${this.baseUrl}/import`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    return response.data.data!;
-  }
-
-  /**
-   * 获取导入模板
-   */
-  async getImportTemplate(format: 'csv' | 'xlsx' = 'xlsx'): Promise<Blob> {
+  async downloadTemplate(): Promise<Blob> {
     const response = await api.get(`${this.baseUrl}/import-template`, {
-      params: { format },
       responseType: 'blob'
     });
     return response.data;
   }
 
   /**
-   * 验证排放因子数据
+   * 验证导入数据
    */
-  async validateEmissionFactor(data: CreateEmissionFactorRequest): Promise<{
-    valid: boolean;
-    errors: Array<{ field: string; message: string }>;
-    warnings: Array<{ field: string; message: string }>;
+  async validateImportData(data: any[]): Promise<{
+    valid: number;
+    invalid: number;
+    errors: Array<{
+      row: number;
+      field: string;
+      message: string;
+      value: any;
+    }>;
   }> {
-    const response = await api.post(`${this.baseUrl}/validate`, data);
-    return response.data.data!;
+    const response = await api.post(`${this.baseUrl}/validate-import`, {
+      data
+    });
+    return response.data.data;
   }
 
   /**
