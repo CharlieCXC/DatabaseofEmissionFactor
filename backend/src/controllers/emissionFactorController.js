@@ -777,6 +777,114 @@ const getFormOptions = async (req, res) => {
   }
 };
 
+/**
+ * 更新质量评估
+ */
+const updateQualityAssessment = async (req, res) => {
+  try {
+    const { uuid } = req.params;
+    const {
+      temporal_representativeness,
+      geographical_representativeness,
+      technology_representativeness,
+      completeness,
+      reliability,
+      quality_score,
+      quality_grade,
+      confidence_level,
+      quality_recommendations
+    } = req.body;
+
+    const result = await pool.query(`
+      UPDATE emission_factors 
+      SET 
+        temporal_representativeness = $1,
+        geographical_representativeness = $2,
+        technology_representativeness = $3,
+        completeness = $4,
+        reliability = $5,
+        quality_score = $6,
+        quality_grade_new = $7,
+        confidence_level = $8,
+        quality_recommendations = $9,
+        updated_at = NOW()
+      WHERE uuid = $10
+      RETURNING *
+    `, [
+      temporal_representativeness,
+      geographical_representativeness,
+      technology_representativeness,
+      completeness,
+      reliability,
+      quality_score,
+      quality_grade,
+      confidence_level,
+      JSON.stringify(quality_recommendations),
+      uuid
+    ]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Emission factor not found'
+      });
+    }
+
+    logger.info('Quality assessment updated:', { uuid, quality_score, quality_grade });
+
+    res.json({
+      success: true,
+      data: result.rows[0]
+    });
+
+  } catch (error) {
+    logger.error('Update quality assessment failed:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update quality assessment'
+    });
+  }
+};
+
+/**
+ * 获取质量评估历史
+ */
+const getQualityAssessmentHistory = async (req, res) => {
+  try {
+    const { uuid } = req.params;
+
+    const result = await pool.query(`
+      SELECT 
+        temporal_representativeness,
+        geographical_representativeness,
+        technology_representativeness,
+        completeness,
+        reliability,
+        quality_score,
+        quality_grade,
+        confidence_level,
+        recommendations,
+        assessed_by,
+        assessed_at
+      FROM quality_assessment_history
+      WHERE emission_factor_uuid = $1
+      ORDER BY assessed_at DESC
+    `, [uuid]);
+
+    res.json({
+      success: true,
+      data: result.rows
+    });
+
+  } catch (error) {
+    logger.error('Get quality assessment history failed:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get quality assessment history'
+    });
+  }
+};
+
 // 辅助函数：转换导入行数据
 function transformImportRow(row) {
   const required = ['活动分类L1', '活动分类L2', '活动分类L3', '中文名称', '国家代码', '地区', '排放值', '单位', '参考年份', '数据机构', '质量等级'];
@@ -897,5 +1005,7 @@ module.exports = {
   exportEmissionFactors,
   downloadImportTemplate,
   getStats,
-  getFormOptions
+  getFormOptions,
+  updateQualityAssessment,
+  getQualityAssessmentHistory
 }; 

@@ -256,6 +256,24 @@ router.post('/:uuid/quality-review',
   catchAsync(emissionFactorController.submitQualityReview)
 );
 
+/**
+ * @route   PUT /api/v1/emission-factors/:uuid/quality-assessment
+ * @desc    更新质量评估
+ * @access  Private
+ */
+router.put('/:uuid/quality-assessment', 
+  catchAsync(emissionFactorController.updateQualityAssessment)
+);
+
+/**
+ * @route   GET /api/v1/emission-factors/:uuid/quality-assessment/history
+ * @desc    获取质量评估历史
+ * @access  Public
+ */
+router.get('/:uuid/quality-assessment/history',
+  catchAsync(emissionFactorController.getQualityAssessmentHistory)
+);
+
 // ===== 统计和分析路由 =====
 
 /**
