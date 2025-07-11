@@ -4,7 +4,7 @@ const multer = require('multer');
 const path = require('path');
 
 const emissionFactorController = require('../controllers/emissionFactorController');
-const validateRequest = require('../middleware/validateRequest');
+const { validateRequest } = require('../middleware/validateRequest');
 const { catchAsync } = require('../middleware/errorHandler');
 const {
   createEmissionFactorSchema,

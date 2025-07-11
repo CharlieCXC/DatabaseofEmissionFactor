@@ -8,7 +8,7 @@ const path = require('path');
 require('dotenv').config();
 
 const logger = require('./utils/logger');
-const errorHandler = require('./middleware/errorHandler');
+const { errorHandler } = require('./middleware/errorHandler');
 const authRoutes = require('./routes/auth');
 const emissionFactorRoutes = require('./routes/emissionFactors');
 const dictionaryRoutes = require('./routes/dictionaries');
@@ -145,8 +145,8 @@ const gracefulShutdown = (signal) => {
     logger.info('HTTP server closed.');
     
     // 关闭数据库连接
-    const db = require('./config/database');
-    db.end(() => {
+    const pool = require('./config/database');
+    pool.end(() => {
       logger.info('Database connection closed.');
       process.exit(0);
     });

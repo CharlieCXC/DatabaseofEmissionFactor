@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { catchAsync } = require('../middleware/errorHandler');
-const validateRequest = require('../middleware/validateRequest');
+const { validateRequest } = require('../middleware/validateRequest');
 const Joi = require('joi');
 
 // 简单的查询验证模式

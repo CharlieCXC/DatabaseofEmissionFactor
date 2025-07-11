@@ -80,45 +80,37 @@ export const DataImport: React.FC<DataImportProps> = ({
   const [importProgress, setImportProgress] = useState(0);
 
   // 下载模板
-  const downloadTemplate = () => {
-    const templateData = [
-      {
-        '活动类别L1': 'Energy',
-        '活动类别L2': 'Electricity',
-        '活动类别L3': 'Coal_Power',
-        '中文名称': '华北电网燃煤发电',
-        '国家代码': 'CN',
-        '地区': 'North_China_Grid',
-        '排放值': 0.8872,
-        '单位': 'kgCO2eq/kWh',
-        '年份': 2024,
-        '数据机构': '中国电力企业联合会',
-        '质量等级': 'A',
-      },
-      {
-        '活动类别L1': 'Transport',
-        '活动类别L2': 'Road',
-        '活动类别L3': 'Gasoline_Car',
-        '中文名称': '汽油乘用车',
-        '国家代码': 'CN',
-        '地区': 'National',
-        '排放值': 0.2016,
-        '单位': 'kgCO2eq/km',
-        '年份': 2024,
-        '数据机构': '生态环境部',
-        '质量等级': 'A',
-      },
-    ];
+  const downloadTemplate = async () => {
+    try {
+      const response = await fetch('/api/v1/emission-factors/export/template?format=xlsx');
+      
+      if (!response.ok) {
+        throw new Error('模板下载失败');
+      }
 
-    const ws = XLSX.utils.json_to_sheet(templateData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, '排放因子模板');
-    
-    const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-    const file = new Blob([excelBuffer], { type: 'application/octet-stream' });
-    saveAs(file, '排放因子导入模板.xlsx');
-    
-    message.success('模板下载成功');
+      // 获取文件名
+      const contentDisposition = response.headers.get('Content-Disposition');
+      let filename = '排放因子导入模板.xlsx';
+      if (contentDisposition) {
+        const matches = contentDisposition.match(/filename="(.+)"/);
+        if (matches) {
+          filename = matches[1];
+        }
+      }
+
+      // 下载文件
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      
+      message.success('模板下载成功');
+    } catch (error) {
+      message.error('模板下载失败：' + (error as Error).message);
+    }
   };
 
   // 文件上传配置
@@ -300,27 +292,72 @@ export const DataImport: React.FC<DataImportProps> = ({
     setImportProgress(0);
     
     try {
-      // 模拟批量导入过程
-      const batchSize = 10;
-      const batches = [];
-      for (let i = 0; i < validationResult.successData.length; i += batchSize) {
-        batches.push(validationResult.successData.slice(i, i + batchSize));
+      // 转换数据格式为后端接口格式
+      const transformedData = validationResult.successData.map(row => ({
+        activity_category: {
+          level_1: row['活动类别L1'],
+          level_2: row['活动类别L2'],
+          level_3: row['活动类别L3'],
+          display_name_cn: row['中文名称']
+        },
+        geographic_scope: {
+          country_code: row['国家代码'],
+          region: row['地区'],
+          display_name_cn: row['中文名称']
+        },
+        emission_value: {
+          value: parseFloat(row['排放值'].toString()),
+          unit: row['单位'],
+          reference_year: parseInt(row['年份'].toString())
+        },
+        data_source: {
+          organization: row['数据机构'],
+          publication: '',
+          publication_date: new Date().toISOString().slice(0, 10),
+          url: '',
+          notes: ''
+        },
+        quality_info: {
+          grade: row['质量等级'],
+          confidence: 'Medium',
+          last_review_date: new Date().toISOString().slice(0, 10),
+          notes: '',
+          reviewer: ''
+        },
+        created_by: 'import_user'
+      }));
+
+      setImportProgress(30);
+
+      // 调用后端批量导入接口
+      const response = await fetch('/api/v1/emission-factors/batch', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(transformedData)
+      });
+
+      setImportProgress(70);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || '导入失败');
       }
 
-      let importedCount = 0;
-      for (const batch of batches) {
-        // 这里调用实际的API导入方法
-        // await emissionFactorService.batchImport(batch);
-        
-        // 模拟导入延迟
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        importedCount += batch.length;
-        setImportProgress(Math.round((importedCount / validationResult.successData.length) * 100));
-      }
+      const result = await response.json();
+      setImportProgress(100);
 
-      setCurrentStep(2);
-      message.success(`成功导入 ${validationResult.successData.length} 条排放因子数据`);
+      if (result.success) {
+        setCurrentStep(2);
+        message.success(`成功导入 ${result.data.created} 条排放因子数据`);
+        
+        if (result.data.errors > 0) {
+          message.warning(`有 ${result.data.errors} 条数据导入失败`);
+        }
+      } else {
+        throw new Error(result.error || '导入失败');
+      }
       
       // 延迟后关闭弹窗并刷新列表
       setTimeout(() => {

@@ -224,70 +224,94 @@ export const DataExport: React.FC<DataExportProps> = ({
         queryParams.reference_year_end = filterValues.reference_year_range[1].year();
       }
 
-      // 模拟数据获取过程
-      setExportProgress(30);
-      
-      // 这里应该调用实际的API获取数据
-      // const response = await emissionFactorService.queryEmissionFactors({
-      //   ...queryParams,
-      //   page: 1,
-      //   limit: 10000, // 导出时获取所有数据
-      // });
-      
-             // 模拟数据
-       const mockData: EmissionFactor[] = [
-         {
-           id: '1',
-           name: '华北电网燃煤发电排放因子',
-           description: '华北电网燃煤发电的CO2排放因子',
-           category: 'Energy',
-           sub_category: 'Electricity',
-           unit: 'kgCO2eq/kWh',
-           value: 0.8872,
-           uncertainty: 0.05,
-           data_source: '中国电力企业联合会',
-           reference_year: 2024,
-           geographical_scope: '华北电网',
-           quality_score: 85,
-           temporal_representativeness: 4,
-           geographical_representativeness: 4,
-           technology_representativeness: 5,
-           completeness: 4,
-           reliability: 4,
-           methodology_description: '基于实际发电数据统计计算',
-           gas_type: 'CO2',
-           sector: 'Energy',
-           activity: 'Electricity Generation',
-           fuel_type: 'Coal',
-           status: 'published' as const,
-           tags: ['官方数据', '华北电网'],
-           created_at: '2024-06-01T10:00:00Z',
-           updated_at: '2024-06-01T10:00:00Z',
-           created_by: 'admin',
-           updated_by: 'admin'
-         }
-       ];
+      setExportProgress(20);
 
-      setExportProgress(60);
-
-      // 格式化数据
-      const formattedData = formatExportData(mockData);
+      // 构建导出URL参数
+      const urlParams = new URLSearchParams();
+      urlParams.append('format', exportOptions.format);
       
-      setExportProgress(80);
-
-      // 生成文件
-      const timestamp = new Date().toISOString().slice(0, 10);
-      const fileName = `${exportOptions.fileName}_${timestamp}`;
-      
-      if (exportOptions.format === 'xlsx') {
-        generateExcelFile(formattedData, fileName);
-      } else if (exportOptions.format === 'csv') {
-        generateCSVFile(formattedData, fileName);
+      if (queryParams.category_l1?.length > 0) {
+        queryParams.category_l1.forEach((cat: string) => urlParams.append('category_l1', cat));
       }
+      if (queryParams.country_code?.length > 0) {
+        queryParams.country_code.forEach((code: string) => urlParams.append('country_code', code));
+      }
+      if (queryParams.quality_grade?.length > 0) {
+        queryParams.quality_grade.forEach((grade: string) => urlParams.append('quality_grade', grade));
+      }
+      if (queryParams.reference_year_start) {
+        urlParams.append('reference_year_start', queryParams.reference_year_start.toString());
+      }
+      if (queryParams.reference_year_end) {
+        urlParams.append('reference_year_end', queryParams.reference_year_end.toString());
+      }
+
+      setExportProgress(40);
+
+      // 调用后端导出接口
+      const exportUrl = `/api/v1/emission-factors/export?${urlParams.toString()}`;
       
-      setExportProgress(100);
-      
-      message.success(`成功导出 ${formattedData.length} 条数据`);
+      if (exportOptions.format === 'xlsx' || exportOptions.format === 'csv') {
+        // 文件下载
+        const response = await fetch(exportUrl);
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || '导出失败');
+        }
+
+        setExportProgress(80);
+
+        // 获取文件名
+        const contentDisposition = response.headers.get('Content-Disposition');
+        let filename = `排放因子数据_${new Date().toISOString().slice(0, 10)}.${exportOptions.format}`;
+        if (contentDisposition) {
+          const matches = contentDisposition.match(/filename="(.+)"/);
+          if (matches) {
+            filename = matches[1];
+          }
+        }
+
+        // 下载文件
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        window.URL.revokeObjectURL(url);
+
+        setExportProgress(100);
+        message.success('文件下载成功');
+
+      } else {
+        // JSON格式，获取数据
+        const response = await fetch(exportUrl);
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || '导出失败');
+        }
+
+        const result = await response.json();
+        setExportProgress(80);
+
+        if (result.success) {
+          // 格式化数据
+          const formattedData = formatExportData(result.data);
+          
+          // 生成文件
+          const timestamp = new Date().toISOString().slice(0, 10);
+          const fileName = `${exportOptions.fileName}_${timestamp}`;
+          
+          generateExcelFile(formattedData, fileName);
+          
+          setExportProgress(100);
+          message.success(`成功导出 ${result.data.length} 条数据`);
+        } else {
+          throw new Error(result.error || '导出失败');
+        }
+      }
       
       // 延迟关闭弹窗
       setTimeout(() => {
